@@ -10,7 +10,6 @@ export default {
   sprite: {
     sliceX: 8,
     sliceY: 7,
-    filter: 'none',
     anims: {
       standA: {
         from: 0,
