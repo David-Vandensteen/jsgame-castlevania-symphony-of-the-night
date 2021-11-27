@@ -14,12 +14,13 @@ class Game {
   }
 
   computeMove(player, background, screenMiddle) {
-    if (player.states.direction === 'right' && player.pos.x > screenMiddle) {
+    const { isDirectionLeft, isDirectionRight } = player.states;
+    if (isDirectionRight() && player.pos.x > screenMiddle) {
       player.pos.x = screenMiddle;
       background.move(-player.config.speed, 0);
     }
 
-    if (player.states.direction === 'left' && player.pos.x < screenMiddle && background.pos.x < 0) {
+    if (isDirectionLeft() && player.pos.x < screenMiddle && background.pos.x < 0) {
       player.pos.x = screenMiddle;
       background.move(player.config.speed, 0);
     }

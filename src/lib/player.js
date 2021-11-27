@@ -20,6 +20,8 @@ const playerRegisterStates = (player) => {
     isJump: () => player.states.jump,
     isAttack: () => player.states.attack,
     isCrouch: () => player.states.crouch,
+    isDirectionLeft: () => player.states.direction === 'left',
+    isDirectionRight: () => player.states.direction === 'right',
   };
 
   const reset = () => {
@@ -30,35 +32,40 @@ const playerRegisterStates = (player) => {
     player.states.crouch = false;
   };
 
-  const { states, curAnim, jump } = player;
+  const {
+    states,
+    curAnim,
+    jump,
+    play,
+  } = player;
 
   player.stateIdle = (anim) => {
     reset();
     states.idle = true;
-    player.play(anim);
+    play(anim);
   };
   player.stateWalk = (anim) => {
     reset();
     states.walk = true;
-    if (curAnim() !== 'walk') player.play(anim);
+    if (curAnim() !== 'walk') play(anim);
   };
   player.stateJump = (anim) => {
     reset();
     states.jump = true;
     jump(player.config.jump);
-    if (curAnim() !== 'jump') player.play(anim);
+    if (curAnim() !== 'jump') play(anim);
   };
   player.stateAttack = (anim) => {
     states.idle = false;
     states.walk = false;
     states.jump = false;
     states.attack = true;
-    if (curAnim() !== 'whip' && curAnim() !== 'whipCrouch') player.play(anim);
+    if (curAnim() !== 'whip' && curAnim() !== 'whipCrouch') play(anim);
   };
   player.stateCrouch = (anim) => {
     reset();
     states.crouch = true;
-    if (curAnim() !== 'crouchB') player.play(anim);
+    if (curAnim() !== 'crouchB') play(anim);
   };
   player.stateDirection = (direction) => {
     states.direction = direction;
@@ -113,7 +120,7 @@ const playerRegisterKeys = (player, kaboom) => {
   });
 
   kaboom.onKeyDown('up', () => {
-    if (isGrounded()) {
+    if (isGrounded() && !isAttack() && !isCrouch()) {
       stateJump('jump');
     }
   });
