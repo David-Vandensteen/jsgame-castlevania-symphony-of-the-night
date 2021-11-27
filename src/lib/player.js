@@ -49,9 +49,11 @@ const playerRegisterStates = (player) => {
     if (curAnim() !== 'jump') player.play(anim);
   };
   player.stateAttack = (anim) => {
-    reset();
+    states.idle = false;
+    states.walk = false;
+    states.jump = false;
     states.attack = true;
-    if (curAnim() !== 'whip') player.play(anim);
+    if (curAnim() !== 'whip' && curAnim() !== 'whipCrouch') player.play(anim);
   };
   player.stateCrouch = (anim) => {
     reset();
@@ -70,9 +72,11 @@ const playerRegisterKeys = (player, kaboom) => {
     isCrouch,
     isJump,
     isWalk,
+    isIdle,
   } = player.states;
 
   const {
+    stateAttack,
     stateCrouch,
     stateIdle,
     stateJump,
@@ -80,7 +84,6 @@ const playerRegisterKeys = (player, kaboom) => {
   } = player;
 
   const move = (direction) => {
-    // player.states.direction = direction; // TODO : direction setter
     player.stateDirection(direction);
     if (direction === 'left') {
       player.flipX(true);
@@ -102,11 +105,11 @@ const playerRegisterKeys = (player, kaboom) => {
   });
 
   kaboom.onKeyRelease('left', () => {
-    if (!isJump()) stateIdle('standA');
+    if (!isJump() && !isCrouch() && !isAttack()) stateIdle('standA');
   });
 
   kaboom.onKeyRelease('right', () => {
-    if (!isJump()) stateIdle('standA');
+    if (!isJump() && !isCrouch() && !isAttack()) stateIdle('standA');
   });
 
   kaboom.onKeyDown('up', () => {
@@ -120,25 +123,35 @@ const playerRegisterKeys = (player, kaboom) => {
   });
 
   kaboom.onKeyRelease('down', () => {
-    stateCrouch('crouchB');
+    if (!isJump() && !isWalk() && !isAttack() && !isIdle()) stateCrouch('crouchB');
   });
 
   kaboom.onKeyDown('space', () => {
-    player.stateAttack('whip');
+    if (!isCrouch()) {
+      stateAttack('whip');
+    } else {
+      stateAttack('whipCrouch');
+    }
   });
   return player;
 };
 
 const playerRegisterAnimEnd = (player) => {
-  const { onAnimEnd, config, stateIdle } = player;
+  const {
+    onAnimEnd,
+    config,
+    stateIdle,
+    stateCrouch,
+  } = player;
+
   const { isCrouch, isJump } = player.states;
 
   player.onAnimEnd('standA', () => {
     if (config.idleLoop.current >= config.idleLoop.max) {
-      player.config.idleLoop.current = 0;
+      config.idleLoop.current = 0;
       if (!isCrouch() && !isJump()) stateIdle('standB');
     } else {
-      player.config.idleLoop.current += 1;
+      config.idleLoop.current += 1;
       if (!isCrouch() && !isJump()) stateIdle('standA');
     }
   });
@@ -146,14 +159,20 @@ const playerRegisterAnimEnd = (player) => {
   onAnimEnd('crouchB', () => {
     stateIdle('standA');
   });
-
   onAnimEnd('jump', () => {
     stateIdle('standA');
   });
-
   onAnimEnd('whip', () => {
     stateIdle('standA');
   });
+  onAnimEnd('whipCrouch', () => {
+    if (isCrouch()) {
+      stateCrouch('crouchA');
+    } else {
+      stateIdle('standA');
+    }
+  });
+
   return player;
 };
 

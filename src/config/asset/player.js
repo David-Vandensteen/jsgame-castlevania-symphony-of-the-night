@@ -44,7 +44,7 @@ export default {
         to: 39,
       },
       whipCrouch: {
-        loop: true,
+        loop: false,
         from: 40,
         to: 46,
       },
