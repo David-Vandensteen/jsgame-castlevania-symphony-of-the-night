@@ -5,7 +5,7 @@ const config = {
       min: 1.1,
       max: 2,
     },
-    env: 'dev',
+    env: 'prod',
   },
   kaboom: {
     fullscreen: true,

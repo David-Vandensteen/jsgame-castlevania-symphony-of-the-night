@@ -2,29 +2,29 @@
 
 import kaboom from 'kaboom';
 import playerConfig from './config/asset/player';
-import backgroundConfig from './config/asset/background';
-import { playerRegisterAnimEnd, playerRegisterKeys, playerRegisterStates } from './lib/player';
+import levelConfig from './config/asset/level';
+import player from './lib/player';
+import level from './lib/level';
 
 class Game {
-  loadAssets() {
-    this.k.loadSprite('background', backgroundConfig.asset);
-    this.k.loadSprite('player', playerConfig.asset, playerConfig.sprite);
-    this.k.loadSound('music', 'sound/music.mp3');
+  load() {
+    level.load();
+    player.load();
     return this;
   }
 
-  computeMove(player, background, screenMiddle) {
-    const { isDirectionLeft, isDirectionRight } = player.states;
-    if (isDirectionRight() && player.pos.x > screenMiddle) {
-      player.pos.x = screenMiddle;
-      background.move(-player.config.speed, 0);
+  computeMove({ richter }, background, screenMiddle) {
+    const { isDirectionLeft, isDirectionRight } = richter.states;
+    if (isDirectionRight() && richter.pos.x > screenMiddle) {
+      richter.pos.x = screenMiddle;
+      background.move(-richter.config.speed, 0);
     }
 
-    if (isDirectionLeft() && player.pos.x < screenMiddle && background.pos.x < 0) {
-      player.pos.x = screenMiddle;
-      background.move(player.config.speed, 0);
+    if (isDirectionLeft() && richter.pos.x < screenMiddle && background.pos.x < 0) {
+      richter.pos.x = screenMiddle;
+      background.move(richter.config.speed, 0);
     }
-    if (player.pos.x < 75) player.pos.x = 75;
+    if (richter.pos.x < 75) richter.pos.x = 75;
     if (background.pos.x > background.config.limits.left) background.pos.x = 0;
     if (background.pos.x < background.config.limits.right) {
       background.pos.x = background.config.limits.right;
@@ -36,57 +36,34 @@ class Game {
     this.k.scene('game', () => {
       this.k.gravity(gameConfig.gravity);
 
-      const background = this.k.add([
-        this.k.sprite('background'),
-        this.k.pos(0, 0), {
-          config: backgroundConfig,
-        },
-      ]);
+      level.add()
+        .play();
 
-      const player = this.k.add([
-        this.k.sprite('player', {
-          animSpeed: playerConfig.animSpeed,
-        }),
-        this.k.pos(100, 100),
-        this.k.area(),
-        this.k.body(), {
-          config: playerConfig,
-        },
-      ]);
-      // floor
-      this.k.add([
-        this.k.rect(this.k.width(), 24),
-        this.k.area(),
-        this.k.pos(0, 187),
-        this.k.solid(),
-        this.k.opacity(0),
-      ]);
-
-      playerRegisterStates(player);
-      player.stateIdle('standA');
-
-      this.k.focus();
-
-      playerRegisterAnimEnd(player);
-      playerRegisterKeys(player, this.k);
-
-      this.k.play('music', {
-        loop: true,
-      });
-
-      player.onUpdate(() => {
-        this.computeMove(player, background, this.k.center().x);
-      });
+      player.add()
+        .registerStates()
+        .registerKeys()
+        .onAnimEnd()
+        .richter.stateIdle('standA')
+        .onUpdate(() => {
+          this.computeMove(player, level.background, this.k.center().x);
+        });
     });
+    this.k.focus();
     return this;
   }
 
-  start(kaboomConfig, gameConfig, assetConfig) {
+  register(kaboomConfig, gameConfig, assetConfig) {
+    this.gameConfig = gameConfig;
     this.k = kaboom(kaboomConfig);
     this.k.loadRoot(assetConfig.root);
+    player.register(this.k, playerConfig);
+    level.register(this.k, levelConfig);
+    return this;
+  }
 
-    this.loadAssets()
-      .scene(gameConfig);
+  start() {
+    this.load()
+      .scene(this.gameConfig);
 
     this.k.go('game');
     return this;
@@ -95,5 +72,6 @@ class Game {
 
 export default (kaboomConfig, gameConfig, assetConfig) => {
   const game = new Game();
+  game.register(kaboomConfig, gameConfig, assetConfig);
   return game.start(kaboomConfig, gameConfig, assetConfig);
 };
