@@ -5,7 +5,6 @@ import playerConfig from './config/asset/player';
 import levelConfig from './config/asset/level';
 import player from './lib/player';
 import level from './lib/level';
-import whip from './config/asset/whip';
 
 class Game {
   load() {

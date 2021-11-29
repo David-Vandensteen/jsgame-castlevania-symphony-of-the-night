@@ -81,10 +81,10 @@ class Player {
     const move = (direction) => {
       richter.stateDirection(direction);
       if (direction === 'left') {
-        richter.flipX(true);
+        // richter.flipX(true);
         richter.move(-richter.config.speed, 0);
       } else if (direction === 'right' && !richter.states.isAttack()) {
-        richter.flipX(false);
+        // richter.flipX(false);
         richter.move(richter.config.speed, 0);
       }
       richter.config.idleLoop.current = 0;
@@ -181,18 +181,25 @@ class Player {
     };
     richter.stateDirection = (direction) => {
       richter.states.direction = direction;
-      return richter;
+      // eslint-disable-next-line no-unused-expressions
+      (direction === 'left') ? richter.flipX(true) : richter.flipX(false);
     };
 
     whip.states = {
       idle: false,
       attack: false,
+      direction: '',
       isIdle: () => whip.states.idle,
       isAttack: () => whip.states.attack,
       reset: () => {
         whip.states.idle = false;
         whip.states.attack = false;
       },
+    };
+
+    whip.stateDirection = (direction) => {
+      whip.states.direction = direction;
+      return whip;
     };
 
     whip.stateIdle = () => {
