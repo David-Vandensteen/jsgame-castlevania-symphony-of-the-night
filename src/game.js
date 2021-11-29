@@ -5,6 +5,7 @@ import playerConfig from './config/asset/player';
 import levelConfig from './config/asset/level';
 import player from './lib/player';
 import level from './lib/level';
+import whip from './config/asset/whip';
 
 class Game {
   load() {
@@ -45,7 +46,15 @@ class Game {
         .onAnimEnd()
         .richter.stateIdle('standA')
         .onUpdate(() => {
-          this.computeMove(player, level.background, this.k.center().x);
+          this.computeMove(player, level.background, this.k.center().x); // TODO : on player
+        });
+
+      player.whip.stateIdle()
+        .onUpdate(() => { // TODO : on player
+          if (player.whip.opacity) {
+            player.whip.pos.x = player.richter.pos.x + 25;
+            player.whip.pos.y = player.richter.pos.y - 20;
+          }
         });
     });
     this.k.focus();

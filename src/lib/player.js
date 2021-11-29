@@ -25,42 +25,36 @@ class Player {
   }
 
   onAnimEnd() {
-    const { richter } = this;
-    const {
-      onAnimEnd,
-      config,
-      stateIdle,
-      stateCrouch,
-    } = richter;
-
+    const { richter, whip } = this;
     const { isCrouch, isJump } = richter.states;
 
-    onAnimEnd('standA', () => {
-      if (config.idleLoop.current >= config.idleLoop.max) {
-        config.idleLoop.current = 0;
-        if (!isCrouch() && !isJump()) stateIdle('standB');
+    richter.onAnimEnd('standA', () => {
+      if (richter.config.idleLoop.current >= richter.config.idleLoop.max) {
+        richter.config.idleLoop.current = 0;
+        if (!isCrouch() && !isJump()) richter.stateIdle('standB');
       } else {
-        config.idleLoop.current += 1;
-        if (!isCrouch() && !isJump()) stateIdle('standA');
+        richter.config.idleLoop.current += 1;
+        if (!isCrouch() && !isJump()) richter.stateIdle('standA');
       }
     });
 
-    onAnimEnd('crouchB', () => {
-      stateIdle('standA');
+    richter.onAnimEnd('crouchB', () => { richter.stateIdle('standA'); });
+    richter.onAnimEnd('jump', () => { richter.stateIdle('standA'); });
+
+    richter.onAnimEnd('whip', () => {
+      richter.stateIdle('standA');
+      whip.stateIdle();
     });
-    onAnimEnd('jump', () => {
-      stateIdle('standA');
-    });
-    onAnimEnd('whip', () => {
-      stateIdle('standA');
-    });
-    onAnimEnd('whipCrouch', () => {
+
+    richter.onAnimEnd('whipCrouch', () => {
       if (isCrouch()) {
-        stateCrouch('crouchA');
+        richter.stateCrouch('crouchA');
       } else {
-        stateIdle('standA');
+        richter.stateIdle('standA');
       }
     });
+
+    whip.onAnimEnd('attack', () => { whip.stateIdle(); });
     return this;
   }
 
@@ -77,23 +71,7 @@ class Player {
   }
 
   registerKeys() {
-    const { richter } = this;
-    const {
-      isAttack,
-      isCrouch,
-      isJump,
-      isWalk,
-      isIdle,
-    } = richter.states;
-
-    const {
-      stateAttack,
-      stateCrouch,
-      stateIdle,
-      stateJump,
-      isGrounded,
-    } = richter;
-
+    const { richter, whip } = this;
     const {
       onKeyDown,
       onKeyPress,
@@ -105,27 +83,29 @@ class Player {
       if (direction === 'left') {
         richter.flipX(true);
         richter.move(-richter.config.speed, 0);
-      } else if (direction === 'right' && !isAttack()) {
+      } else if (direction === 'right' && !richter.states.isAttack()) {
         richter.flipX(false);
         richter.move(richter.config.speed, 0);
       }
       richter.config.idleLoop.current = 0;
-      if (!isWalk() && !isJump()) richter.stateWalk('walk');
+      if (!richter.states.isWalk() && !richter.states.isJump()) richter.stateWalk('walk');
     };
 
-    onKeyDown('left', () => { if (!isCrouch() && !isAttack()) move('left'); });
-    onKeyDown('right', () => { if (!isCrouch() && !isAttack()) move('right'); });
-    onKeyRelease('left', () => { if (!isJump() && !isCrouch() && !isAttack()) stateIdle('standA'); });
-    onKeyRelease('right', () => { if (!isJump() && !isCrouch() && !isAttack()) stateIdle('standA'); });
-    onKeyDown('up', () => { if (isGrounded() && !isAttack() && !isCrouch()) { stateJump('jump'); } });
-    onKeyPress('down', () => { stateCrouch('crouchA'); });
-    onKeyRelease('down', () => { if (!isJump() && !isWalk() && !isAttack() && !isIdle()) stateCrouch('crouchB'); });
+    onKeyDown('left', () => { if (!richter.states.isCrouch() && !richter.states.isAttack()) move('left'); });
+    onKeyDown('right', () => { if (!richter.states.isCrouch() && !richter.states.isAttack()) move('right'); });
+    onKeyRelease('left', () => { if (!richter.states.isJump() && !richter.states.isCrouch() && !richter.states.isAttack()) richter.stateIdle('standA'); });
+    onKeyRelease('right', () => { if (!richter.states.isJump() && !richter.states.isCrouch() && !richter.states.isAttack()) richter.stateIdle('standA'); });
+    onKeyDown('up', () => { if (richter.isGrounded() && !richter.states.isAttack() && !richter.states.isCrouch()) { richter.stateJump('jump'); } });
+    onKeyPress('down', () => { richter.stateCrouch('crouchA'); });
+    onKeyRelease('down', () => { if (!richter.states.isJump() && !richter.states.isWalk() && !richter.states.isAttack() && !richter.states.isIdle()) richter.stateCrouch('crouchB'); });
 
     onKeyDown('space', () => {
-      if (!isCrouch()) {
-        stateAttack('whip');
+      if (!richter.states.isCrouch()) {
+        richter.stateAttack('whip');
+        whip.stateAttack('attack');
       } else {
-        stateAttack('whipCrouch');
+        richter.stateAttack('whipCrouch');
+        whip.stateAttack('attack');
       }
     });
     return this;
@@ -134,7 +114,7 @@ class Player {
   registerStates() {
     const { richter, whip } = this;
 
-    if (richter.states) {
+    if (richter.states || whip.states) {
       error('states object already exist');
       return this;
     }
@@ -153,47 +133,40 @@ class Player {
       isCrouch: () => richter.states.crouch,
       isDirectionLeft: () => richter.states.direction === 'left',
       isDirectionRight: () => richter.states.direction === 'right',
+      reset: () => {
+        richter.states.idle = false;
+        richter.states.walk = false;
+        richter.states.jump = false;
+        richter.states.attack = false;
+        richter.states.crouch = false;
+      },
     };
-
-    const reset = () => {
-      richter.states.idle = false;
-      richter.states.walk = false;
-      richter.states.jump = false;
-      richter.states.attack = false;
-      richter.states.crouch = false;
-    };
-
-    const {
-      states,
-      curAnim,
-      jump,
-    } = richter;
 
     richter.stateIdle = (anim) => {
-      reset();
-      states.idle = true;
+      richter.states.reset();
+      richter.states.idle = true;
       richter.play(anim);
       return richter;
     };
     richter.stateWalk = (anim) => {
-      reset();
-      states.walk = true;
-      if (curAnim() !== 'walk') richter.play(anim);
+      richter.states.reset();
+      richter.states.walk = true;
+      if (richter.curAnim() !== 'walk') richter.play(anim);
       return richter;
     };
     richter.stateJump = (anim) => {
-      reset();
-      states.jump = true;
-      jump(richter.config.jump);
-      if (curAnim() !== 'jump') richter.play(anim);
+      richter.states.reset();
+      richter.states.jump = true;
+      richter.jump(richter.config.jump);
+      if (richter.curAnim() !== 'jump') richter.play(anim);
       return richter;
     };
     richter.stateAttack = (anim) => {
-      states.idle = false;
-      states.walk = false;
-      states.jump = false;
-      states.attack = true;
-      if (curAnim() !== 'whip' && curAnim() !== 'whipCrouch') {
+      richter.states.idle = false;
+      richter.states.walk = false;
+      richter.states.jump = false;
+      richter.states.attack = true;
+      if (richter.curAnim() !== 'whip' && richter.curAnim() !== 'whipCrouch') {
         richter.play(anim);
         whip.opacity = 0;
         whip.play('attack');
@@ -201,15 +174,42 @@ class Player {
       return richter;
     };
     richter.stateCrouch = (anim) => {
-      reset();
-      states.crouch = true;
-      if (curAnim() !== 'crouchB') richter.play(anim);
+      richter.states.reset();
+      richter.states.crouch = true;
+      if (richter.curAnim() !== 'crouchB') richter.play(anim);
       return richter;
     };
     richter.stateDirection = (direction) => {
-      states.direction = direction;
+      richter.states.direction = direction;
       return richter;
     };
+
+    whip.states = {
+      idle: false,
+      attack: false,
+      isIdle: () => whip.states.idle,
+      isAttack: () => whip.states.attack,
+      reset: () => {
+        whip.states.idle = false;
+        whip.states.attack = false;
+      },
+    };
+
+    whip.stateIdle = () => {
+      whip.opacity = false;
+      whip.states.reset();
+      whip.states.idle = true;
+      return whip;
+    };
+
+    whip.stateAttack = (anim) => {
+      whip.opacity = true;
+      whip.states.reset();
+      whip.states.attack = true;
+      if (whip.curAnim() !== 'attack') whip.play(anim);
+      return whip;
+    };
+
     return this;
   }
 }
