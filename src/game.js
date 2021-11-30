@@ -13,25 +13,6 @@ class Game {
     return this;
   }
 
-  computeMove({ richter }, background, screenMiddle) {
-    const { isDirectionLeft, isDirectionRight } = richter.states;
-    if (isDirectionRight() && richter.pos.x > screenMiddle) {
-      richter.pos.x = screenMiddle;
-      background.move(-richter.config.speed, 0);
-    }
-
-    if (isDirectionLeft() && richter.pos.x < screenMiddle && background.pos.x < 0) {
-      richter.pos.x = screenMiddle;
-      background.move(richter.config.speed, 0);
-    }
-    if (richter.pos.x < 75) richter.pos.x = 75;
-    if (background.pos.x > background.config.limits.left) background.pos.x = 0;
-    if (background.pos.x < background.config.limits.right) {
-      background.pos.x = background.config.limits.right;
-    }
-    return this;
-  }
-
   scene(gameConfig) {
     this.k.scene('game', () => {
       this.k.gravity(gameConfig.gravity);
@@ -43,18 +24,10 @@ class Game {
         .registerStates()
         .registerKeys()
         .onAnimEnd()
-        .richter.stateIdle('standA')
-        .onUpdate(() => {
-          this.computeMove(player, level.background, this.k.center().x); // TODO : on player
-        });
+        .richter.stateIdle('standA');
 
-      player.whip.stateIdle()
-        .onUpdate(() => { // TODO : on player
-          if (player.whip.opacity) {
-            player.whip.pos.x = player.richter.pos.x + 25;
-            player.whip.pos.y = player.richter.pos.y - 20;
-          }
-        });
+      player.whip.stateIdle();
+      player.onUpdate(level);
     });
     this.k.focus();
     return this;

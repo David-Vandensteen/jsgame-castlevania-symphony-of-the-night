@@ -2,25 +2,57 @@ const { error } = console;
 
 class Player {
   add() {
-    this.richter = this.k.add([
-      this.k.sprite('richter', {
+    const {
+      add,
+      sprite,
+      opacity,
+      pos,
+      area,
+      body,
+    } = this.k;
+
+    this.richter = add([
+      sprite('richter', {
         animSpeed: this.config.richter.animSpeed,
       }),
-      this.k.pos(100, 100),
-      this.k.area(),
-      this.k.body(), {
+      pos(100, 100),
+      area(),
+      body(), {
         config: this.config.richter,
       },
     ]);
-    this.whip = this.k.add([
-      this.k.sprite('whip', {
+    this.whip = add([
+      sprite('whip', {
         animSpeed: this.config.whip.animSpeed,
       }),
-      this.k.opacity(0),
-      this.k.pos(120, 120), {
+      opacity(0),
+      pos(120, 120), {
         config: this.config.whip,
       },
     ]);
+    return this;
+  }
+
+  computeMove(level) {
+    const { richter } = this;
+    const { isDirectionLeft, isDirectionRight } = this.richter.states;
+    const { background } = level;
+    const screenMiddle = this.k.center().x;
+
+    if (isDirectionRight() && richter.pos.x > screenMiddle) {
+      richter.pos.x = screenMiddle;
+      background.move(-richter.config.speed, 0);
+    }
+
+    if (isDirectionLeft() && richter.pos.x < screenMiddle && background.pos.x < 0) {
+      richter.pos.x = screenMiddle;
+      background.move(richter.config.speed, 0);
+    }
+    if (richter.pos.x < 75) richter.pos.x = 75;
+    if (background.pos.x > background.config.limits.left) background.pos.x = 0;
+    if (background.pos.x < background.config.limits.right) {
+      background.pos.x = background.config.limits.right;
+    }
     return this;
   }
 
@@ -58,9 +90,35 @@ class Player {
     return this;
   }
 
+  onUpdate(level) {
+    const { richter, whip } = this;
+    this.whip.onUpdate(() => {
+      if (whip.opacity) {
+        if (whip.states.isDirectionRight() && !richter.states.isCrouch()) {
+          whip.pos.x = richter.pos.x + 25;
+          whip.pos.y = richter.pos.y - 20;
+        } else {
+          whip.pos.x = richter.pos.x - 25;
+          whip.pos.y = richter.pos.y - 20;
+        }
+      }
+      if (richter.states.isCrouch()) {
+        if (whip.states.isDirectionRight()) {
+          whip.pos.x = richter.pos.x + 25;
+          whip.pos.y = richter.pos.y - 10;
+        } else {
+          whip.pos.x = richter.pos.x - 25;
+          whip.pos.y = richter.pos.y - 10;
+        }
+      }
+    });
+    this.richter.onUpdate(() => this.computeMove(level));
+  }
+
   load() {
-    this.k.loadSprite('richter', this.config.richter.asset, this.config.richter.sprite);
-    this.k.loadSprite('whip', this.config.whip.asset, this.config.whip.sprite);
+    const { loadSprite } = this.k;
+    loadSprite('richter', this.config.richter.asset, this.config.richter.sprite);
+    loadSprite('whip', this.config.whip.asset, this.config.whip.sprite);
     return this;
   }
 
@@ -81,10 +139,10 @@ class Player {
     const move = (direction) => {
       richter.stateDirection(direction);
       if (direction === 'left') {
-        // richter.flipX(true);
+        whip.stateDirection('left');
         richter.move(-richter.config.speed, 0);
       } else if (direction === 'right' && !richter.states.isAttack()) {
-        // richter.flipX(false);
+        whip.stateDirection('right');
         richter.move(richter.config.speed, 0);
       }
       richter.config.idleLoop.current = 0;
@@ -93,11 +151,11 @@ class Player {
 
     onKeyDown('left', () => { if (!richter.states.isCrouch() && !richter.states.isAttack()) move('left'); });
     onKeyDown('right', () => { if (!richter.states.isCrouch() && !richter.states.isAttack()) move('right'); });
+    onKeyDown('up', () => { if (richter.isGrounded() && !richter.states.isAttack() && !richter.states.isCrouch()) { richter.stateJump('jump'); } });
+    onKeyPress('down', () => { if (!richter.states.isAttack()) richter.stateCrouch('crouchA'); });
     onKeyRelease('left', () => { if (!richter.states.isJump() && !richter.states.isCrouch() && !richter.states.isAttack()) richter.stateIdle('standA'); });
     onKeyRelease('right', () => { if (!richter.states.isJump() && !richter.states.isCrouch() && !richter.states.isAttack()) richter.stateIdle('standA'); });
-    onKeyDown('up', () => { if (richter.isGrounded() && !richter.states.isAttack() && !richter.states.isCrouch()) { richter.stateJump('jump'); } });
-    onKeyPress('down', () => { richter.stateCrouch('crouchA'); });
-    onKeyRelease('down', () => { if (!richter.states.isJump() && !richter.states.isWalk() && !richter.states.isAttack() && !richter.states.isIdle()) richter.stateCrouch('crouchB'); });
+    onKeyRelease('down', () => { if (!richter.states.isAttack()) richter.stateIdle('standA'); });
 
     onKeyDown('space', () => {
       if (!richter.states.isCrouch()) {
@@ -166,6 +224,7 @@ class Player {
       richter.states.walk = false;
       richter.states.jump = false;
       richter.states.attack = true;
+      // if (richter.curAnim() !== 'crouchB') richter.states.crouch = false;
       if (richter.curAnim() !== 'whip' && richter.curAnim() !== 'whipCrouch') {
         richter.play(anim);
         whip.opacity = 0;
@@ -181,8 +240,8 @@ class Player {
     };
     richter.stateDirection = (direction) => {
       richter.states.direction = direction;
-      // eslint-disable-next-line no-unused-expressions
-      (direction === 'left') ? richter.flipX(true) : richter.flipX(false);
+      richter.flipX((direction === 'left'));
+      return richter;
     };
 
     whip.states = {
@@ -191,6 +250,8 @@ class Player {
       direction: '',
       isIdle: () => whip.states.idle,
       isAttack: () => whip.states.attack,
+      isDirectionLeft: () => whip.states.direction === 'left',
+      isDirectionRight: () => whip.states.direction === 'right',
       reset: () => {
         whip.states.idle = false;
         whip.states.attack = false;
@@ -217,6 +278,11 @@ class Player {
       return whip;
     };
 
+    whip.stateDirection = (direction) => {
+      whip.states.direction = direction;
+      whip.flipX((direction === 'left'));
+      return whip;
+    };
     return this;
   }
 }
