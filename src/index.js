@@ -3,19 +3,24 @@ import { kaboomConfig, gameConfig, assetConfig } from './config/project';
 
 const { log, error } = console;
 const aspectRatio = window.innerWidth / window.innerHeight;
+const {
+  aspectRatioRequirement,
+  env,
+} = gameConfig;
 
-log('environement :', gameConfig.env);
-log('requirement min aspect ratio :', gameConfig.aspectRatioRequirement.min);
-log('requirement max aspect ratio :', gameConfig.aspectRatioRequirement.max);
+log('environement :', env);
+log('requirement min aspect ratio :', aspectRatioRequirement.min);
+log('requirement max aspect ratio :', aspectRatioRequirement.max);
 log('current aspect ratio :', aspectRatio);
 log('scale :', kaboomConfig.scale);
+log('asset root :', assetConfig.root);
 
 const menu = () => {
-  if (aspectRatio < gameConfig.aspectRatioRequirement.min
-    || aspectRatio > gameConfig.aspectRatioRequirement.max) {
+  if (aspectRatio < aspectRatioRequirement.min
+    || aspectRatio > aspectRatioRequirement.max) {
     // TODO : listen resize event for auto start game
-    let message = `Error : aspect ratio of the window must be lower than  ${gameConfig.aspectRatioRequirement.min}`;
-    message += ` and highter than ${gameConfig.aspectRatioRequirement.max}`;
+    let message = `Error : aspect ratio of the window must be lower than  ${aspectRatioRequirement.min}`;
+    message += ` and highter than ${aspectRatioRequirement.max}`;
     message += '<br />';
     message += '<br />';
     message += `Your current aspect ratio is ${aspectRatio}`;
@@ -42,4 +47,4 @@ const menu = () => {
 };
 
 // eslint-disable-next-line no-unused-expressions
-(gameConfig.env !== 'dev') ? menu() : game({ kaboomConfig, gameConfig, assetConfig });
+(env !== 'dev') ? menu() : game({ kaboomConfig, gameConfig, assetConfig });

@@ -17,8 +17,8 @@ class Game {
     this.k.scene('game', () => {
       this.k.gravity(gravity);
 
-      level.add();
-      // .play();
+      level.add()
+        .play();
 
       player.add()
         .registerStates()

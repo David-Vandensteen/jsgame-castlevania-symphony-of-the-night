@@ -15,7 +15,7 @@ const config = {
     debug: true,
   },
   asset: {
-    root: 'http://localhost:3000/asset/',
+    root: `${window.location.href}asset/`,
   },
 };
 export default { config };
