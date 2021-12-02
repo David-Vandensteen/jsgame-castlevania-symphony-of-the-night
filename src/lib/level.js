@@ -29,7 +29,7 @@ class Level {
     });
   }
 
-  register(kaboom, config) {
+  register({ kaboom, config }) {
     this.k = kaboom;
     this.config = config;
     return this;

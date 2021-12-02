@@ -36,10 +36,10 @@ const menu = () => {
       .addEventListener('click', () => {
         log('start game');
         document.body.innerHTML = '';
-        game(kaboomConfig, gameConfig, assetConfig);
+        game({ kaboomConfig, gameConfig, assetConfig });
       });
   }
 };
 
 // eslint-disable-next-line no-unused-expressions
-(gameConfig.env !== 'dev') ? menu() : game(kaboomConfig, gameConfig, assetConfig);
+(gameConfig.env !== 'dev') ? menu() : game({ kaboomConfig, gameConfig, assetConfig });

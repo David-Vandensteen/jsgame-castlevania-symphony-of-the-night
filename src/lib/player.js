@@ -120,7 +120,7 @@ class Player {
     return this;
   }
 
-  register(kaboom, config) {
+  register({ kaboom, config }) {
     this.k = kaboom;
     this.config = config;
     return this;

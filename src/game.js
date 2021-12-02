@@ -13,12 +13,12 @@ class Game {
     return this;
   }
 
-  scene(gameConfig) {
+  scene(gravity) {
     this.k.scene('game', () => {
-      this.k.gravity(gameConfig.gravity);
+      this.k.gravity(gravity);
 
-      level.add()
-        .play();
+      level.add();
+      // .play();
 
       player.add()
         .registerStates()
@@ -33,26 +33,26 @@ class Game {
     return this;
   }
 
-  register(kaboomConfig, gameConfig, assetConfig) {
+  register({ kaboomConfig, gameConfig, assetConfig }) {
     this.gameConfig = gameConfig;
     this.k = kaboom(kaboomConfig);
     this.k.loadRoot(assetConfig.root);
-    player.register(this.k, playerConfig);
-    level.register(this.k, levelConfig);
+    player.register({ kaboom: this.k, config: playerConfig });
+    level.register({ kaboom: this.k, config: levelConfig });
     return this;
   }
 
   start() {
     this.load()
-      .scene(this.gameConfig);
+      .scene(this.gameConfig.gravity);
 
     this.k.go('game');
     return this;
   }
 }
 
-export default (kaboomConfig, gameConfig, assetConfig) => {
+export default ({ kaboomConfig, gameConfig, assetConfig }) => {
   const game = new Game();
-  game.register(kaboomConfig, gameConfig, assetConfig);
-  return game.start(kaboomConfig, gameConfig, assetConfig);
+  game.register({ kaboomConfig, gameConfig, assetConfig });
+  return game.start({ kaboomConfig, gameConfig, assetConfig });
 };
