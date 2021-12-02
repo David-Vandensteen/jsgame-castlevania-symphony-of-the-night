@@ -1,7 +1,7 @@
 # jsgame-castlevania-symphony-of-the-night
 
-A little game sample experiment. (with Kaboom Javascript)
-Sprites was founded on https://www.spriters-resource.com/
+A little game sample experiment. (with Kaboom Javascript)<br />
+Sprites was founded on https://www.spriters-resource.com/<br />
 
 Thanks to sprite ripper:
 - Darth RPG
