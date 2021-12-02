@@ -13,7 +13,7 @@ Install dependencies:
 npm i
 ```
 
-Run on http://localhost:3000:
+Run on http://localhost:3000
 ```
 npm start
 ```
